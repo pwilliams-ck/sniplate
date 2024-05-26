@@ -7,15 +7,6 @@ import (
 	"strconv"
 )
 
-func (app *application) readIdParam(r *http.Request) (int, error) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id < 1 {
-		return 0, errors.New("invalid id parameter")
-	}
-
-	return id, nil
-}
-
 // writeJSON() helper for sending responses. This takes the destination
 // http.ResponseWriter, the HTTP status code, the data to encode, and a
 // header map containing any additional HTTP headers we want to include in the response.
@@ -42,4 +33,16 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data any, h
 	w.Write(json)
 
 	return nil
+}
+
+// Read snip ID URL param.
+func (app *application) readIDParam(r *http.Request) (int64, error) {
+	// PathValue() is new for Go 1.22 and allows us to read URL params.
+	// We also convert the string to base 10 integer with a 64 bit size.
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id < 1 {
+		return 0, errors.New("invalid id parameter")
+	}
+
+	return id, nil
 }

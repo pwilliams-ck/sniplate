@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-const version = "0.1.1"
+const version = "0.1.2"
 
 type config struct {
 	port   int
@@ -108,6 +108,7 @@ func main() {
 
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env, "tls", cfg.useTLS, "log", cfg.useLog)
 
+	// useTLS conditional logic.
 	if cfg.useTLS {
 		srv.TLSConfig = tlsConfig
 		err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
