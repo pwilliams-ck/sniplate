@@ -44,6 +44,49 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data envelo
 	return nil
 }
 
+func (app *application) readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
+	// Decode the request body into the targed destination
+	err := json.NewDecoder(r.Body).Decode(dst)
+	if err != nil {
+		// If err, start triage
+		var syntaxError *json.SyntaxError
+		var unmarshalTypeError *json.UnmarshalTypeError
+		var invalidUnmarshalError *json.InvalidUnmarshalError
+
+		switch {
+		// Use errors.As() to check if the error is a *json.SyntaxError type.
+		case errors.As(err, &syntaxError):
+			return fmt.Errorf("request body contains badly-formed JSON at character %d", syntaxError.Offset)
+
+		// Decode() may also return an *json.UnmarshalTypeError error.
+		case errors.Is(err, io.ErrUnexpectedEOF):
+			return errors.New("body contains badly-formed JSON")
+
+		// *json.UnmarshalTypeError errors occur when the JSON value is the wrong type for the
+		// target destination.
+		case errors.As(err, &unmarshalTypeError):
+			if unmarshalTypeError.Field != "" {
+				return fmt.Errorf("body contains incorrect JSON type for field %q", unmarshalTypeError.Field)
+			}
+			return fmt.Errorf("body contains incorrect JSON type at character %d", unmarshalTypeError.Offset)
+
+		// io.EOF errors occur if the request body is empty.
+		case errors.Is(err, io.EOF):
+			return errors.New("request body must not be empty")
+
+		// json.InvalidUnmarshalError occurs when you pass a non-nil pointer to Decode(). We catch this
+		// and panic, rather than returning an error.
+		case errors.As(err, &invalidUnmarshalError):
+			panic(err)
+
+		default:
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Read snip ID URL param.
 func (app *application) readIDParam(r *http.Request) (int64, error) {
 	// PathValue() is new for Go 1.22 and allows us to read URL params.
