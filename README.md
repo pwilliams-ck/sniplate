@@ -1,8 +1,9 @@
 # sniplate
 
-`sniplate` is a _template_ for building secure, scalable, APIs with Go. The
-_template_ uses text _snippets_ as the initial model to get started. There is
-also a user model, you can easily decouple these into micro services as well!
+`sniplate` is a boilerplate for building secure, scalable, HTTP services with
+Go. This _template_ uses text snippets (_snips_) as the initial API model to get
+started, hence the name _sniplate_. There is also a user model, you can
+de-couple these and build out micro services as well!
 
 The initial project set up has been completed, and includes the following
 features so far.
@@ -27,7 +28,9 @@ features so far.
 To get started locally, make sure you have Git and Go installed, then pull the
 repository.
 
-### Pull Project
+### Download Project
+
+Pull repository with Git.
 
 ```bash
 git pull https://github.com/pwilliams-ck/sniplate
@@ -40,6 +43,10 @@ go get https://github.com/pwilliams-ck/sniplate
 ```
 
 ### Run Project
+
+`cd` into the root directory and execute the following to compile and run with a
+single command. Further down there is a
+[Build for Remote Server](#build-for-remote-server) section as well.
 
 ```bash
 go run ./cmd/api
@@ -55,10 +62,10 @@ For server configuration info, try running `go run ./cmd/api -help`.
 
 ### Set Up TLS
 
-There is an option to run the server with TLS enabled, you if you need to create
-a development TLS certificate and key. If you have Go installed they include a
-handy tool to create self-signed certificates with `crypto/tls` package. `cd`
-into the project root, `mkdir`, and `cd` again.
+There is an option to run the server with TLS enabled. If you want to create a
+development TLS certificate and key, and have Go installed, they include a handy
+tool to create self-signed certificates with the `crypto/tls` package. `cd` into
+the project root, `mkdir tls`, and `cd` again.
 
 ```bash
 cd sniplate
@@ -66,9 +73,9 @@ mkdir tls
 cd tls
 ```
 
-Next, find the `generate_cert.go` tool's path, and run it from the `tls`
-directory. Here is the path for MacOS, and probably Linux. The CLI flags are
-there for convenience, copy/pasta away.
+Next, find the `generate_cert.go` tool's path on your local machine, and run it
+from the `tls` directory. Here is the path for MacOS, and probably Linux. The
+CLI flags are there for convenience, copy/pasta away.
 
 ```bash
 go run /usr/local/go/src/crypto/tls/generate_cert.go --rsa-bits=2048 --host=localhost
