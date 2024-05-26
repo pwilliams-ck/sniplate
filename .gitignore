@@ -1,0 +1,7 @@
+# Binaries
+bin/
+
+# README formatting
+.prettierrc
+
+
