@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pwilliams-ck/sniplate/internal/data"
+	"github.com/pwilliams-ck/sniplate/internal/validator"
 )
 
 // For now we simply return a plain-text placeholder response.
@@ -23,6 +24,22 @@ func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request
 	err := app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Copy the values from the input struct into a new Snip struct.
+	snip := &data.Snip{
+		Title:   input.Title,
+		Content: input.Content,
+		Tags:    input.Tags,
+	}
+
+	// Init new Validator instance.
+	v := validator.New()
+
+	// Use ValidateMovie() to return any validation errors.
+	if data.ValidateSnip(v, snip); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
