@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -48,29 +47,12 @@ func main() {
 	// We need to parse all CLI flags in order to use them as well.
 	flag.Parse()
 
-	// Conditional logic for useLog CLI flag.
-	var logWriter io.Writer
-	if cfg.useLog {
-		// Open a file for writing logs if useLog is true
-		logFile, err := os.OpenFile("sniplate.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			fmt.Println("Error opening log file:", err)
-			os.Exit(1)
-		}
-		defer logFile.Close()
-
-		// Use a multiwriter to write logs to both standard output and the log file
-		logWriter = io.MultiWriter(os.Stdout, logFile)
-	} else {
-		// If useLog is false, write logs only to standard output
-		logWriter = os.Stdout
-	}
+	// Logging setup
+	logWriter := setupLogger(cfg.useLog)
 
 	// Create a new logger that writes to standard output (os.Stdout).
 	// Logger is configured with a text handler that formats log records as plain text.
 	// nil argument specifies that no additional handler options are provided.
-	// We will want to send logs elsewhere as well, we can define that in a separate
-	// logging module.
 	logger := slog.New(slog.NewTextHandler(logWriter, nil))
 
 	app := &application{
@@ -78,7 +60,7 @@ func main() {
 		logger: logger,
 	}
 
-	// TLS Config is set up for modern web , maybe remove some of these settings if needed.
+	// TLS Config is set up for modern web, maybe remove some of these settings if needed.
 	// TLS 1.3 remains unaffected by all of this, as all of its connections are considered
 	// safe while writing this for Go 1.22.
 	tlsConfig := &tls.Config{
@@ -108,7 +90,7 @@ func main() {
 
 	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env, "tls", cfg.useTLS, "log", cfg.useLog)
 
-	// useTLS conditional logic.
+	// Start server with or without TLS.
 	if cfg.useTLS {
 		srv.TLSConfig = tlsConfig
 		err := srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")

@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -51,4 +54,23 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	}
 
 	return id, nil
+}
+
+// setupLogger configures the logging output based on the useLog flag.
+func setupLogger(useLog bool) io.Writer {
+	var logWriter io.Writer
+	if useLog {
+		// Open a file for writing logs if useLog is true
+		logFile, err := os.OpenFile("sniplate.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Println("Error opening log file:", err)
+			os.Exit(1)
+		}
+		// Use a multiwriter to write logs to both standard output and the log file
+		logWriter = io.MultiWriter(os.Stdout, logFile)
+	} else {
+		// If useLog is false, write logs only to standard output
+		logWriter = os.Stdout
+	}
+	return logWriter
 }
