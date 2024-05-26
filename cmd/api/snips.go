@@ -34,8 +34,8 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 		Version:   1,
 	}
 
-	// Write the response.
-	err = app.writeJSON(w, http.StatusOK, snip, nil)
+	// Write the response, passing the envelope defined in helpers.go.
+	err = app.writeJSON(w, http.StatusOK, envelope{"snip": snip}, nil)
 	if err != nil {
 		app.logger.Error(err.Error())
 		http.Error(w, "The server encontered a problem and could not process your request", http.StatusInternalServerError)

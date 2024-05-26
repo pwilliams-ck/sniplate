@@ -7,12 +7,18 @@ import (
 	"strconv"
 )
 
+type envelope map[string]any
+
 // writeJSON() helper for sending responses. This takes the destination
 // http.ResponseWriter, the HTTP status code, the data to encode, and a
 // header map containing any additional HTTP headers we want to include in the response.
-func (app *application) writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
+func (app *application) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
 	// Encode to JSON, return any errors, if any.
-	json, err := json.Marshal(data)
+	// In benchmarks json.MarshalIndent() takes 65% longer to run and uses around 30% more memory
+	// than json.Marshal(), as well as making more heap allocations.
+	// We’re talking about a few thousandths of a millisecond. If your service is operating in
+	// a very resource-constrained environment, then this is worth being aware of.
+	json, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}
