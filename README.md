@@ -44,7 +44,7 @@ go get https://github.com/pwilliams-ck/sniplate
 
 ### Run Project
 
-`cd` into the root directory and execute the following to compile and run with a
+`cd` into the project root directory and execute the following to compile and run with a
 single command. Further down there is a
 [Build for Remote Server](#build-for-remote-server) section as well.
 
