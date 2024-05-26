@@ -19,8 +19,7 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 	// Read ID from URL param.
 	id, err := app.readIDParam(r)
 	if err != nil {
-		app.logger.Error(err.Error())
-		http.NotFound(w, r)
+		app.notFoundResponse(w, r)
 		return
 	}
 
@@ -37,7 +36,6 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 	// Write the response, passing the envelope defined in helpers.go.
 	err = app.writeJSON(w, http.StatusOK, envelope{"snip": snip}, nil)
 	if err != nil {
-		app.logger.Error(err.Error())
-		http.Error(w, "The server encontered a problem and could not process your request", http.StatusInternalServerError)
+		app.serverErrorResponse(w, r, err)
 	}
 }

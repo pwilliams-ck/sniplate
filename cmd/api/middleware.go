@@ -62,7 +62,7 @@ func (app *application) gracefulRecovery(next http.Handler) http.Handler {
 			// call of panic.o panic().
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
-				app.serverError(w, r, fmt.Errorf("%s", err))
+				app.serverErrorResponse(w, r, fmt.Errorf("%s", err))
 			}
 		}()
 
