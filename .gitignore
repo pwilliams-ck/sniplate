@@ -4,4 +4,7 @@ bin/
 # README formatting
 .prettierrc
 
+# Log file
+sniplate.log
+
 

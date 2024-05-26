@@ -17,6 +17,7 @@ type config struct {
 	port   int
 	env    string
 	useTLS bool
+	useLog bool
 }
 
 type application struct {
@@ -40,26 +41,37 @@ func main() {
 	// Defaults to false, use true for production.
 	flag.BoolVar(&cfg.useTLS, "tls", false, "Enable TLS (true|false)")
 
+	// Boolean useLog gives the option to enable logging to a file, as well as the usual stdout.
+	// Defaults to false, use true for production.
+	flag.BoolVar(&cfg.useLog, "log", false, "Enable log file (true|false)")
+
 	// We need to parse all CLI flags in order to use them as well.
 	flag.Parse()
 
-	// Open a file for writing logs. Appends, creates, and writes, with 644 permissions.
-	logFile, err := os.OpenFile("app.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Println("Error opening log file:", err)
-		os.Exit(1)
-	}
-	defer logFile.Close()
+	// Conditional logic for useLog CLI flag.
+	var logWriter io.Writer
+	if cfg.useLog {
+		// Open a file for writing logs if useLog is true
+		logFile, err := os.OpenFile("sniplate.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			fmt.Println("Error opening log file:", err)
+			os.Exit(1)
+		}
+		defer logFile.Close()
 
-	// multiHandler enables us to write the logs to standard out, as well as a file of our choice.
-	multiHandler := io.MultiWriter(os.Stdout, logFile)
+		// Use a multiwriter to write logs to both standard output and the log file
+		logWriter = io.MultiWriter(os.Stdout, logFile)
+	} else {
+		// If useLog is false, write logs only to standard output
+		logWriter = os.Stdout
+	}
 
 	// Create a new logger that writes to standard output (os.Stdout).
 	// Logger is configured with a text handler that formats log records as plain text.
 	// nil argument specifies that no additional handler options are provided.
 	// We will want to send logs elsewhere as well, we can define that in a separate
 	// logging module.
-	logger := slog.New(slog.NewTextHandler(multiHandler, nil))
+	logger := slog.New(slog.NewTextHandler(logWriter, nil))
 
 	app := &application{
 		config: cfg,
@@ -94,7 +106,7 @@ func main() {
 		ErrorLog:     slog.NewLogLogger(logger.Handler(), slog.LevelError),
 	}
 
-	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env, "tls", cfg.useTLS)
+	logger.Info("starting server", "addr", srv.Addr, "env", cfg.env, "tls", cfg.useTLS, "log", cfg.useLog)
 
 	if cfg.useTLS {
 		srv.TLSConfig = tlsConfig
