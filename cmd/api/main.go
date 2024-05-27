@@ -56,7 +56,7 @@ func main() {
 
 	// Read the DSN value from the db-dsn command-line flag into the config struct. We
 	// default to using our development DSN if no flag is provided.
-	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://postgres:password@postgres/snips?sslmode=disable", "PostgreSQL DSN")
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://postgres:password@postgres/sniplate?sslmode=disable", "PostgreSQL DSN")
 	// We need to parse all CLI flags in order to use them as well.
 	flag.Parse()
 

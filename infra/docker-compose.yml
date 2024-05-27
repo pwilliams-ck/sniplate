@@ -24,6 +24,6 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: snips
+      POSTGRES_DB: sniplate
     volumes:
       - ./db-data/postgres/:/var/lib/postgresql/data/

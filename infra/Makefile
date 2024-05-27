@@ -5,7 +5,7 @@ DEFAULT_PORT=4200
 DEFAULT_ENV=development
 DEFAULT_TLS=false
 DEFAULT_LOG=false
-DEFAULT_DSN=postgres://postgres:password@postgres:5432/snips?sslmode=disable
+DEFAULT_DSN=postgres://postgres:password@postgres:5432/sniplate?sslmode=disable
 
 ## up: Starts all containers in the background without forcing build.
 up:
