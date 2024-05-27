@@ -1,22 +1,32 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"time"
+
+	// Import the pq driver so that it can register itself with the database/sql
+	// package. We alias this import to the blank identifier, to stop the Go
+	// compiler complaining that the package isn't being used.
+	_ "github.com/lib/pq"
 )
 
-const version = "0.1.2"
+const version = "0.1.5"
 
 type config struct {
 	port   int
 	env    string
 	useTLS bool
 	useLog bool
+	db     struct {
+		dsn string
+	}
 }
 
 type application struct {
@@ -44,6 +54,9 @@ func main() {
 	// Defaults to false, use true for production.
 	flag.BoolVar(&cfg.useLog, "log", false, "Enable log file (true|false)")
 
+	// Read the DSN value from the db-dsn command-line flag into the config struct. We
+	// default to using our development DSN if no flag is provided.
+	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://postgres:password@postgres/snips?sslmode=disable", "PostgreSQL DSN")
 	// We need to parse all CLI flags in order to use them as well.
 	flag.Parse()
 
@@ -54,6 +67,20 @@ func main() {
 	// Logger is configured with a text handler that formats log records as plain text.
 	// nil argument specifies that no additional handler options are provided.
 	logger := slog.New(slog.NewTextHandler(logWriter, nil))
+
+	// Call the openDB() helper function (see below) to create the connection pool,
+	// passing in the config struct. If this returns an error, we log it and exit the
+	// application immediately.
+	db, err := openDB(cfg)
+	if err != nil {
+		logger.Error(err.Error())
+		os.Exit(1)
+	}
+
+	// Defer db.Close() so that the connection pool is closed before the main() function exits.
+	defer db.Close()
+
+	logger.Info("database connection pool established")
 
 	app := &application{
 		config: cfg,
@@ -105,4 +132,32 @@ func main() {
 			os.Exit(1)
 		}
 	}
+}
+
+// The openDB() function returns a sql.DB connection pool.
+func openDB(cfg config) (*sql.DB, error) {
+	// Use sql.Open() to create an empty connection pool, using the DSN from the config
+	// struct.
+	db, err := sql.Open("postgres", cfg.db.dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create a context with a 5-second timeout deadline.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Use PingContext() to establish a new connection to the database, passing in the
+	// context we created above as a parameter. If the connection couldn't be
+	// established successfully within the 5 second deadline, then this will return an
+	// error. If we get this error, or any other, we close the connection pool and
+	// return the error.
+	err = db.PingContext(ctx)
+	if err != nil {
+		db.Close()
+		return nil, err
+	}
+
+	// Return the sql.DB connection pool.
+	return db, nil
 }

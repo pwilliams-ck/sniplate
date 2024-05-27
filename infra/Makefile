@@ -5,6 +5,7 @@ DEFAULT_PORT=4200
 DEFAULT_ENV=development
 DEFAULT_TLS=false
 DEFAULT_LOG=false
+DEFAULT_DSN=postgres://postgres:password@postgres:5432/snips?sslmode=disable
 
 ## up: Starts all containers in the background without forcing build.
 up:
@@ -13,6 +14,7 @@ up:
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
+	 DSN=$${DSN:-${DEFAULT_DSN}} \
 	 docker-compose up -d
 	@echo "Docker images started!"
 
@@ -23,12 +25,14 @@ up_build: build_sniplate
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
+	 DSN=$${DSN:-${DEFAULT_DSN}} \
 	 docker-compose down
 	@echo "Building (when required) and starting docker images..."
 	@PORT=$${PORT:-${DEFAULT_PORT}} \
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
+	 DSN=$${DSN:-${DEFAULT_DSN}} \
 	 docker-compose up --build -d
 	@echo "Docker images built and started!"
 
@@ -39,6 +43,7 @@ down:
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
+	 DSN=$${DSN:-${DEFAULT_DSN}} \
 	 docker-compose down
 	@echo "Done!"
 
