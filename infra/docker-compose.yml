@@ -1,0 +1,29 @@
+services:
+  sniplate:
+    build:
+      context: ./../../sniplate
+      dockerfile: ./sniplate.dockerfile
+    restart: always
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      - DSN=host=postgres port=5432 user=postgres password=password dbname=snips
+        sslmode=disable timezone=UTC connect_timeout=5
+      - PORT
+      - ENV
+      - TLS
+      - LOG
+    command: >
+      ./app/sniplateApp --port=${PORT} --env=${ENV} --tls=${TLS} --log=${LOG}
+
+  postgres:
+    image: "postgres:15"
+    ports:
+      - "5432:5432"
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: snips
+    volumes:
+      - ./db-data/postgres/:/var/lib/postgresql/data/

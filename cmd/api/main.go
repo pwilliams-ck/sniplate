@@ -28,7 +28,7 @@ func main() {
 	var cfg config
 
 	// port defines the port number for the API server.
-	// Defaults to 4000 if not provided via CLI.
+	// Defaults to 4200 if not provided via CLI.
 	flag.IntVar(&cfg.port, "port", 4200, "API server port")
 
 	// env represents the current environment the application is running in.
