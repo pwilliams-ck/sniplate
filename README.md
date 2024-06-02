@@ -44,8 +44,8 @@ go get https://github.com/pwilliams-ck/sniplate
 
 ### Run Project
 
-`cd` into the project root directory and execute the following to compile and run with a
-single command. Further down there is a
+`cd` into the project root directory and execute the following to compile and
+run with a single command. Further down there is a
 [Build for Remote Server](#build-for-remote-server) section as well.
 
 ```bash
@@ -116,3 +116,9 @@ You might need to make it executable with `chmod +x api-test`.
 ## Conclusion
 
 This is a work in progress and will be updated regularly.
+
+## DB DSN
+
+```bash
+postgres://postgres:password@postgres/sniplate?sslmode=disable
+```
