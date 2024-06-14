@@ -2,8 +2,9 @@
 
 `sniplate` is a boilerplate for building secure, scalable, HTTP services with
 Go. This _template_ uses text snippets (_snips_) as the initial API model to get
-started, hence the name _sniplate_. There is also a user model, you can
-de-couple these and build out micro services as well!
+started, hence the name _sniplate_. There will also be a user model, you can
+de-couple these and build out micro services as well, but I feel this is a good
+starting point as a monolith.
 
 The initial project set up has been completed, and includes the following
 features so far.
@@ -42,11 +43,20 @@ Or use Go `get`.
 go get https://github.com/pwilliams-ck/sniplate
 ```
 
-### Run Project
+## Build and Run Project
+
+### Docker and Make
+
+You can use `make start` and `make stop` to build and run the docker
+environment, the migrating part is a work in progress. You can check out the
+`infra/` folder for more info.
+
+### App and DB as Services
 
 `cd` into the project root directory and execute the following to compile and
 run with a single command. Further down there is a
-[Build for Remote Server](#build-for-remote-server) section as well.
+[Build for Remote Server](#build-for-remote-server) section as well. The
+database setup is a work in progress, and will use Make as well.
 
 ```bash
 go run ./cmd/api
