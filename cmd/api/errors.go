@@ -6,6 +6,8 @@ import (
 	"runtime/debug"
 )
 
+// Comment for testing.
+
 // The logError() method is a generic helper for logging an error message along
 // with the current request method and URL as attributes in the log entry.
 func (app *application) logError(r *http.Request, err error) {
