@@ -30,11 +30,11 @@ services:
 
   migrate:
     image: migrate/migrate
-    depends_on:
-      - postgres
     volumes:
       - .././migrations:/migrations
     command:
       V-path=/migrations -database
       "postgresql://postgres:password@infra-postgres-1:5432/sniplate?sslmode=disable"
       up
+    depends_on:
+      - postgres

@@ -47,7 +47,7 @@ func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request
 	fmt.Fprintf(w, "%+v\n", input)
 }
 
-// "GET /v1/snips/:id" endpoint. For now, we retrieve the "id" parameter from the
+// "GET /v1/snips/{id}" endpoint. For now, we retrieve the "id" parameter from the
 // current URL and include it in a placeholder response.
 func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) {
 	// Read ID from URL param.

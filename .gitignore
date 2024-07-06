@@ -2,13 +2,16 @@
 bin/
 sniplateApp
 
-# README formatting
-.prettierrc
-
 # Log file
 sniplate.log
 
 # DB dev data
 infra/db-data/
 
+# Environment variables
+.env
+.envrc
+
+# README formatting
+.prettierrc
 

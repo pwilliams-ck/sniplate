@@ -8,7 +8,7 @@ DEFAULT_LOG=false
 DEFAULT_DSN=postgres://postgres:password@postgres:5432/sniplate?sslmode=disable
 
 ## start: Stops docker-compose (if running), builds all projects and starts docker compose with flags.
-start: build_sniplate
+up_build: build_sniplate
 	@echo "Stopping docker images (if running...)"
 	@PORT=$${PORT:-${DEFAULT_PORT}} \
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
@@ -26,7 +26,7 @@ start: build_sniplate
 	@echo "Docker images built and started!"
 
 ## stop: Stop docker-compose.
-stop:
+down:
 	@echo "Stopping docker compose..."
 	@PORT=$${PORT:-${DEFAULT_PORT}} \
 	 ENV=$${ENV:-${DEFAULT_ENV}} \

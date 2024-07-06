@@ -17,7 +17,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-const version = "0.1.6"
+const version = "0.1.8"
 
 type config struct {
 	port   int
