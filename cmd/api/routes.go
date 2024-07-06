@@ -13,7 +13,7 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	mux.HandleFunc("POST /v1/snips", app.createSnipHandler)
 	mux.HandleFunc("GET /v1/snips/{id}", app.showSnipHandler)
-	mux.HandleFunc("PUT /v1/snips/{id}", app.updateSnipHandler)
+	mux.HandleFunc("PATCH /v1/snips/{id}", app.updateSnipHandler)
 	mux.HandleFunc("DELETE /v1/snips/{id}", app.deleteSnipHandler)
 
 	// Return mux router with middleware.

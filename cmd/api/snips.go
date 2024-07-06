@@ -120,8 +120,8 @@ func (app *application) updateSnipHandler(w http.ResponseWriter, r *http.Request
 
 	// Declare an input struct to hold the expected data from the client.
 	var input struct {
-		Title   string   `json:"title"`
-		Content string   `json:"content"`
+		Title   *string  `json:"title"`
+		Content *string  `json:"content"`
 		Tags    []string `json:"tags"`
 	}
 
@@ -132,11 +132,16 @@ func (app *application) updateSnipHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Copy the values from the request body to the appropriate fields of the snip
-	// record.
-	snip.Title = input.Title
-	snip.Content = input.Content
-	snip.Tags = input.Tags
+	if input.Title != nil {
+		snip.Title = *input.Title
+	}
+	// We also do the same for the other fields in the input struct.
+	if input.Content != nil {
+		snip.Content = *input.Content
+	}
+	if input.Tags != nil {
+		snip.Tags = input.Tags // Note that we don't need to dereference a slice.
+	}
 
 	// Validate the updated snip record, sending the client a 422 Unprocessable Entity
 	// response if any checks fail.
