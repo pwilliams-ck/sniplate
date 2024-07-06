@@ -43,7 +43,7 @@ type SnipModel struct {
 	DB *sql.DB
 }
 
-// The Insert() method accepts a pointer to a movie struct, which should contain the
+// The Insert() method accepts a pointer to a snip struct, which should contain the
 // data for the new record.
 func (m SnipModel) Insert(snip *Snip) error {
 	// Define the SQL query for inserting a new record in the snips table and returning
@@ -110,12 +110,60 @@ func (m SnipModel) Get(id int64) (*Snip, error) {
 	return &snip, nil
 }
 
-// Add a placeholder method for updating a specific record in the movies table.
-func (m SnipModel) Update(movie *Snip) error {
-	return nil
+func (m SnipModel) Update(snip *Snip) error {
+	// Declare the SQL query for updating the record and returning the new version
+	// number.
+	query := `
+        UPDATE snips 
+        SET title = $1, content = $2, tags = $3, version = version + 1
+        WHERE id = $4
+        RETURNING version`
+
+	// Create an args slice containing the values for the placeholder parameters.
+	args := []any{
+		snip.Title,
+		snip.Content,
+		pq.Array(snip.Tags),
+		snip.ID,
+	}
+
+	// Use the QueryRow() method to execute the query, passing in the args slice as a
+	// variadic parameter and scanning the new version value into the snip struct.
+	return m.DB.QueryRow(query, args...).Scan(&snip.Version)
 }
 
-// Add a placeholder method for deleting a specific record from the movies table.
 func (m SnipModel) Delete(id int64) error {
+	// Return an ErrRecordNotFound error if the snip ID is less than 1.
+	if id < 1 {
+		return ErrRecordNotFound
+	}
+
+	// Construct the SQL query to delete the record.
+	query := `
+        DELETE FROM snips
+        WHERE id = $1`
+
+	// Execute the SQL query using the Exec() method, passing in the id variable as
+	// the value for the placeholder parameter. The Exec() method returns a sql.Result
+	// object.
+	result, err := m.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+
+	// Call the RowsAffected() method on the sql.Result object to get the number of rows
+	// affected by the query.
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	// If no rows were affected, we know that the snips table didn't contain a record
+	// with the provided ID at the moment we tried to delete it. In that case we
+	// return an ErrRecordNotFound error.
+	if rowsAffected == 0 {
+		return ErrRecordNotFound
+	}
+
 	return nil
 }

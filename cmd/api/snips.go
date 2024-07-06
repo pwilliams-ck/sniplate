@@ -37,15 +37,15 @@ func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request
 	// Init new Validator instance.
 	v := validator.New()
 
-	// Use ValidateMovie() to return any validation errors.
+	// Use ValidateSnip() to return any validation errors.
 	if data.ValidateSnip(v, snip); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
 
-	// Call the Insert() method on our movies model, passing in a pointer to the
+	// Call the Insert() method on our snips model, passing in a pointer to the
 	// validated snip struct. This will create a record in the database and update the
-	// movie struct with the system-generated information.
+	// snip struct with the system-generated information.
 	err = app.models.Snips.Insert(snip)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
@@ -77,7 +77,7 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Call the Get() method to fetch the data for a specific movie. We also need to
+	// Call the Get() method to fetch the data for a specific snip. We also need to
 	// use the errors.Is() function to check if it returns a data.ErrRecordNotFound
 	// error, in which case we send a 404 Not Found response to the client.
 	snip, err := app.models.Snips.Get(id)
@@ -92,6 +92,98 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 	}
 	// Write the response, passing the envelope defined in helpers.go.
 	err = app.writeJSON(w, http.StatusOK, envelope{"snip": snip}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) updateSnipHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the snip ID from the URL.
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// Fetch the existing snip record from the database, sending a 404 Not Found
+	// response to the client if we couldn't find a matching record.
+	snip, err := app.models.Snips.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// Declare an input struct to hold the expected data from the client.
+	var input struct {
+		Title   string   `json:"title"`
+		Content string   `json:"content"`
+		Tags    []string `json:"tags"`
+	}
+
+	// Read the JSON request body data into the input struct.
+	err = app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	// Copy the values from the request body to the appropriate fields of the snip
+	// record.
+	snip.Title = input.Title
+	snip.Content = input.Content
+	snip.Tags = input.Tags
+
+	// Validate the updated snip record, sending the client a 422 Unprocessable Entity
+	// response if any checks fail.
+	v := validator.New()
+
+	if data.ValidateSnip(v, snip); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Pass the updated snip record to our new Update() method.
+	err = app.models.Snips.Update(snip)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Write the updated snip record in a JSON response.
+	err = app.writeJSON(w, http.StatusOK, envelope{"snip": snip}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *application) deleteSnipHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the snip ID from the URL.
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// Delete the snip from the database, sending a 404 Not Found response to the
+	// client if there isn't a matching record.
+	err = app.models.Snips.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// Return a 200 OK status code along with a success message.
+	err = app.writeJSON(w, http.StatusOK, envelope{"message": "snip successfully deleted"}, nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
