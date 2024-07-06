@@ -15,6 +15,7 @@ import (
 	// package. We alias this import to the blank identifier, to stop the Go
 	// compiler complaining that the package isn't being used.
 	_ "github.com/lib/pq"
+	"github.com/pwilliams-ck/sniplate/internal/data"
 )
 
 const version = "0.1.8"
@@ -35,6 +36,7 @@ type config struct {
 type application struct {
 	config config
 	logger *slog.Logger
+	models data.Models
 }
 
 func main() {
@@ -95,6 +97,7 @@ func main() {
 	app := &application{
 		config: cfg,
 		logger: logger,
+		models: data.NewModels(db),
 	}
 
 	// TLS Config is set up for modern web, maybe remove some of these settings if needed.

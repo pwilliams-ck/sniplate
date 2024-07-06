@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/pwilliams-ck/sniplate/internal/data"
 	"github.com/pwilliams-ck/sniplate/internal/validator"
@@ -43,8 +43,28 @@ func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Dump contents of input struct in a HTTP response.
-	fmt.Fprintf(w, "%+v\n", input)
+	// Call the Insert() method on our movies model, passing in a pointer to the
+	// validated snip struct. This will create a record in the database and update the
+	// movie struct with the system-generated information.
+	err = app.models.Snips.Insert(snip)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// When sending a HTTP response, we want to include a Location header to let the
+	// client know which URL they can find the newly-created resource at. We make an
+	// empty http.Header map and then use the Set() method to add a new Location header,
+	// interpolating the system-generated ID for our new snip in the URL.
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/snips/%d", snip.ID))
+
+	// Write a JSON response with a 201 Created status code, the snip data in the
+	// response body, and the Location header.
+	err = app.writeJSON(w, http.StatusCreated, envelope{"snip": snip}, headers)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
 }
 
 // "GET /v1/snips/{id}" endpoint. For now, we retrieve the "id" parameter from the
@@ -57,16 +77,19 @@ func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// New instance of snip struct, containing the ID we extracted from the URL.
-	snip := data.Snip{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Test",
-		Content:   "Content test",
-		Tags:      []string{"test", "api-dev"},
-		Version:   1,
+	// Call the Get() method to fetch the data for a specific movie. We also need to
+	// use the errors.Is() function to check if it returns a data.ErrRecordNotFound
+	// error, in which case we send a 404 Not Found response to the client.
+	snip, err := app.models.Snips.Get(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
-
 	// Write the response, passing the envelope defined in helpers.go.
 	err = app.writeJSON(w, http.StatusOK, envelope{"snip": snip}, nil)
 	if err != nil {
