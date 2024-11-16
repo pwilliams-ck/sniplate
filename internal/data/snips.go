@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -122,12 +123,12 @@ func (m SnipModel) Get(id int64) (*Snip, error) {
 // various filter parameters as arguments.
 func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip, error) {
 	// Construct the SQL query to retrieve all snip records.
-	query := `
+	query := fmt.Sprintf(`
         SELECT id, created_at, title, content, tags, version
         FROM snips
         WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
         AND (tags @> $2 OR $2 = '{}')
-        ORDER BY id`
+        ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
 
 	// Create a context with a 3-second timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
