@@ -121,30 +121,37 @@ func (m SnipModel) Get(id int64) (*Snip, error) {
 // GetAll() returns a slice of snips. Although we're not
 // using them right now, we've set this up to accept the
 // various filter parameters as arguments.
-func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip, error) {
+func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip, Metadata, error) {
 	// Construct the SQL query to retrieve all snip records.
 	query := fmt.Sprintf(`
-        SELECT id, created_at, title, content, tags, version
+        SELECT count(*) OVER(), id, created_at, title, content, tags, version
         FROM snips
         WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
         AND (tags @> $2 OR $2 = '{}')
-        ORDER BY %s %s, id ASC`, filters.sortColumn(), filters.sortDirection())
+        ORDER BY %s %s, id ASC
+        LIMIT $3 OFFSET $4`, filters.sortColumn(), filters.sortDirection())
 
 	// Create a context with a 3-second timeout.
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Use QueryContext() to execute the query. This returns a sql.Rows resultset
-	// containing the result.
-	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(tags))
+	// As our SQL query now has quite a few placeholder parameters, let's collect the
+	// values for the placeholders in a slice. Notice here how we call the limit() and
+	// offset() methods on the Filters struct to get the appropriate values for the
+	// LIMIT and OFFSET clauses.
+	args := []any{title, pq.Array(tags), filters.limit(), filters.offset()}
+
+	// And then pass the args slice to QueryContext() as a variadic parameter.
+	rows, err := m.DB.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
 	// Importantly, defer a call to rows.Close() to ensure that the resultset is closed
 	// before GetAll() returns.
 	defer rows.Close()
 
+	totalRecords := 0
 	// Initialize an empty slice to hold the snip data.
 	snips := []*Snip{}
 
@@ -156,6 +163,7 @@ func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip
 		// Scan the values from the row into the Snip struct. Again, note that we're
 		// using the pq.Array() adapter on the genres field here.
 		err := rows.Scan(
+			&totalRecords,
 			&snip.ID,
 			&snip.CreatedAt,
 			&snip.Title,
@@ -164,7 +172,7 @@ func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip
 			&snip.Version,
 		)
 		if err != nil {
-			return nil, err
+			return nil, Metadata{}, err
 		}
 
 		// Add the Snip struct to the slice.
@@ -174,11 +182,13 @@ func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip
 	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
 	// that was encountered during the iteration.
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, Metadata{}, err
 	}
 
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
+
 	// If everything went OK, then return the slice of snips.
-	return snips, nil
+	return snips, metadata, nil
 }
 
 func (m SnipModel) Update(snip *Snip) error {
