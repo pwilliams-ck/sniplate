@@ -116,7 +116,7 @@ func (m SnipModel) Update(snip *Snip) error {
 	query := `
         UPDATE snips 
         SET title = $1, content = $2, tags = $3, version = version + 1
-        WHERE id = $4
+        WHERE id = $4 AND version = $5
         RETURNING version`
 
 	// Create an args slice containing the values for the placeholder parameters.
@@ -125,11 +125,20 @@ func (m SnipModel) Update(snip *Snip) error {
 		snip.Content,
 		pq.Array(snip.Tags),
 		snip.ID,
+		snip.Version,
 	}
 
-	// Use the QueryRow() method to execute the query, passing in the args slice as a
-	// variadic parameter and scanning the new version value into the snip struct.
-	return m.DB.QueryRow(query, args...).Scan(&snip.Version)
+	err := m.DB.QueryRow(query, args...).Scan(&snip.Version)
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return ErrEditConflict
+		default:
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (m SnipModel) Delete(id int64) error {

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/pwilliams-ck/sniplate/internal/data"
 	"github.com/pwilliams-ck/sniplate/internal/validator"
@@ -118,6 +119,15 @@ func (app *application) updateSnipHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// If the request contains a X-Expected-Version header, verify that the movie
+	// version in the database matches the expected version specified in the header.
+	if r.Header.Get("X-Expected-Version") != "" {
+		if strconv.Itoa(int(snip.Version)) != r.Header.Get("X-Expected-Version") {
+			app.editConflictResponse(w, r)
+			return
+		}
+	}
+
 	// Declare an input struct to hold the expected data from the client.
 	var input struct {
 		Title   *string  `json:"title"`
@@ -155,7 +165,12 @@ func (app *application) updateSnipHandler(w http.ResponseWriter, r *http.Request
 	// Pass the updated snip record to our new Update() method.
 	err = app.models.Snips.Update(snip)
 	if err != nil {
-		app.serverErrorResponse(w, r, err)
+		switch {
+		case errors.Is(err, data.ErrEditConflict):
+			app.editConflictResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
 		return
 	}
 

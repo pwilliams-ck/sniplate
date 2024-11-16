@@ -9,6 +9,7 @@ import (
 // looking up a snip that doesn't exist in our database.
 var (
 	ErrRecordNotFound = errors.New("record not found")
+	ErrEditConflict   = errors.New("edit conflict")
 )
 
 // Create a Models struct which wraps the SnipModel. We'll add other models to this,
