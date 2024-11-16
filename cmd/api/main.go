@@ -42,39 +42,20 @@ type application struct {
 func main() {
 	var cfg config
 
-	// port defines the port number for the API server.
-	// Defaults to 4200 if not provided via CLI.
+	// APP flags
 	flag.IntVar(&cfg.port, "port", 4200, "API server port")
-
-	// env represents the current environment the application is running in.
-	// Valid values are: development, staging, production.
-	// Defaults to "development" if not set via CLI.
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-
-	// Boolean useTLS gives the option to enable TLS.
-	// Defaults to false, use true for production.
 	flag.BoolVar(&cfg.useTLS, "tls", false, "Enable TLS (true|false)")
-
-	// Boolean useLog gives the option to enable logging to a file, as well as the usual stdout.
-	// Defaults to false, use true for production.
 	flag.BoolVar(&cfg.useLog, "log", false, "Enable log file (true|false)")
 
-	// Read the DSN value from the db-dsn command-line flag into the config struct. We
-	// default to using our development DSN if no flag is provided.
+	// DB flags
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://postgres:password@postgres/sniplate?sslmode=disable", "PostgreSQL DSN")
-	// We need to parse all CLI flags in order to use them as well.
-
-	// Read the connection pool settings from command-line flags into the config struct.
-	// Notice that the default values we're using are the ones we discussed above?
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.DurationVar(&cfg.db.maxIdleTime, "db-max-idle-time", 15*time.Minute, "PostgreSQL max connection idle time")
-
 	flag.Parse()
 
-	// Logging setup
 	logWriter := setupLogger(cfg.useLog)
-
 	// Create a new logger that writes to standard output (os.Stdout).
 	// Logger is configured with a text handler that formats log records as plain text.
 	// nil argument specifies that no additional handler options are provided.

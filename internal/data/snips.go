@@ -1,6 +1,7 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -58,10 +59,13 @@ func (m SnipModel) Insert(snip *Snip) error {
 	// make it nice and clear *what values are being used where* in the query.
 	args := []any{snip.Title, snip.Content, pq.Array(snip.Tags)}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Use the QueryRow() method to execute the SQL query on our connection pool,
 	// passing in the args slice as a variadic parameter and scanning the system-
 	// generated id, created_at and version values into the snip struct.
-	return m.DB.QueryRow(query, args...).Scan(&snip.ID, &snip.CreatedAt, &snip.Version)
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&snip.ID, &snip.CreatedAt, &snip.Version)
 }
 
 func (m SnipModel) Get(id int64) (*Snip, error) {
@@ -82,11 +86,14 @@ func (m SnipModel) Get(id int64) (*Snip, error) {
 	// Declare a Snip struct to hold the data returned by the query.
 	var snip Snip
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Execute the query using the QueryRow() method, passing in the provided id value
 	// as a placeholder parameter, and scan the response data into the fields of the
 	// Snip struct. Importantly, notice that we need to convert the scan target for the
 	// genres column using the pq.Array() adapter function again.
-	err := m.DB.QueryRow(query, id).Scan(
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(
 		&snip.ID,
 		&snip.CreatedAt,
 		&snip.Title,
@@ -110,6 +117,69 @@ func (m SnipModel) Get(id int64) (*Snip, error) {
 	return &snip, nil
 }
 
+// GetAll() returns a slice of snips. Although we're not
+// using them right now, we've set this up to accept the
+// various filter parameters as arguments.
+func (m SnipModel) GetAll(title string, tags []string, filters Filters) ([]*Snip, error) {
+	// Construct the SQL query to retrieve all snip records.
+	query := `
+        SELECT id, created_at, title, content, tags, version
+        FROM snips
+        WHERE (to_tsvector('simple', title) @@ plainto_tsquery('simple', $1) OR $1 = '')
+        AND (tags @> $2 OR $2 = '{}')
+        ORDER BY id`
+
+	// Create a context with a 3-second timeout.
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Use QueryContext() to execute the query. This returns a sql.Rows resultset
+	// containing the result.
+	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(tags))
+	if err != nil {
+		return nil, err
+	}
+
+	// Importantly, defer a call to rows.Close() to ensure that the resultset is closed
+	// before GetAll() returns.
+	defer rows.Close()
+
+	// Initialize an empty slice to hold the snip data.
+	snips := []*Snip{}
+
+	// Use rows.Next to iterate through the rows in the resultset.
+	for rows.Next() {
+		// Initialize an empty Snip struct to hold the data for an individual snip.
+		var snip Snip
+
+		// Scan the values from the row into the Snip struct. Again, note that we're
+		// using the pq.Array() adapter on the genres field here.
+		err := rows.Scan(
+			&snip.ID,
+			&snip.CreatedAt,
+			&snip.Title,
+			&snip.Content,
+			pq.Array(&snip.Tags),
+			&snip.Version,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Add the Snip struct to the slice.
+		snips = append(snips, &snip)
+	}
+
+	// When the rows.Next() loop has finished, call rows.Err() to retrieve any error
+	// that was encountered during the iteration.
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// If everything went OK, then return the slice of snips.
+	return snips, nil
+}
+
 func (m SnipModel) Update(snip *Snip) error {
 	// Declare the SQL query for updating the record and returning the new version
 	// number.
@@ -128,7 +198,10 @@ func (m SnipModel) Update(snip *Snip) error {
 		snip.Version,
 	}
 
-	err := m.DB.QueryRow(query, args...).Scan(&snip.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&snip.Version)
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
@@ -152,10 +225,13 @@ func (m SnipModel) Delete(id int64) error {
         DELETE FROM snips
         WHERE id = $1`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	// Execute the SQL query using the Exec() method, passing in the id variable as
 	// the value for the placeholder parameter. The Exec() method returns a sql.Result
 	// object.
-	result, err := m.DB.Exec(query, id)
+	result, err := m.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

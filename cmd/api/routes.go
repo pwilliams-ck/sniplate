@@ -12,6 +12,7 @@ func (app *application) routes() http.Handler {
 	// endpoints using the HandleFunc() method.
 	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 
+	mux.HandleFunc("GET /v1/snips", app.listSnipsHandler)
 	mux.HandleFunc("POST /v1/snips", app.createSnipHandler)
 	mux.HandleFunc("GET /v1/snips/{id}", app.showSnipHandler)
 	mux.HandleFunc("PATCH /v1/snips/{id}", app.updateSnipHandler)

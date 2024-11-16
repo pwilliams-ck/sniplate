@@ -10,7 +10,56 @@ import (
 	"github.com/pwilliams-ck/sniplate/internal/validator"
 )
 
-// For now we simply return a plain-text placeholder response.
+func (app *application) listSnipsHandler(w http.ResponseWriter, r *http.Request) {
+	// To keep things consistent with our other handlers, we'll define an input struct
+	// to hold the expected values from the request query string.
+	var input struct {
+		Title   string
+		Content string
+		Tags    []string
+		data.Filters
+	}
+
+	// Initialize a new Validator instance.
+	v := validator.New()
+
+	// Call r.URL.Query() to get the url.Values map containing the query string data.
+	qs := r.URL.Query()
+
+	// Use our helpers to extract the title and genres query string values, falling back
+	// to defaults of an empty string and an empty slice respectively if they are not
+	// provided by the client.
+	input.Title = app.readString(qs, "title", "")
+	input.Content = app.readString(qs, "content", "")
+	input.Tags = app.readCSV(qs, "tags", []string{})
+
+	// Read the page and page_size query string values into the embedded struct.
+	input.Filters.Page = app.readInt(qs, "page", 1, v)
+	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
+
+	// Read the sort query string value into the embedded struct.
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+	input.Filters.SortSafelist = []string{"id", "title", "content", "-id", "-title", "-content"}
+
+	// Execute the validation checks on the Filters struct and send a response
+	// containing the errors if necessary.
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	snips, err := app.models.Snips.GetAll(input.Title, input.Tags, input.Filters)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	err = app.writeJSON(w, http.StatusOK, envelope{"snips": snips}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
 func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request) {
 	// Declare an anonymous struct to hold the information that we expect to be in the
 	// HTTP request body. This struct will be our *target decode destination*.
@@ -68,8 +117,6 @@ func (app *application) createSnipHandler(w http.ResponseWriter, r *http.Request
 	}
 }
 
-// "GET /v1/snips/{id}" endpoint. For now, we retrieve the "id" parameter from the
-// current URL and include it in a placeholder response.
 func (app *application) showSnipHandler(w http.ResponseWriter, r *http.Request) {
 	// Read ID from URL param.
 	id, err := app.readIDParam(r)
