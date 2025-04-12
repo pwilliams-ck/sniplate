@@ -19,5 +19,5 @@ func (app *application) routes() http.Handler {
 	mux.HandleFunc("DELETE /v1/snips/{id}", app.deleteSnipHandler)
 
 	// Return mux router with middleware.
-	return app.gracefulRecovery(app.logRequest((commonHeaders(mux))))
+	return app.rateLimit(app.gracefulRecovery(app.logRequest((commonHeaders(mux)))))
 }

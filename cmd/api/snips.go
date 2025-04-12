@@ -46,6 +46,7 @@ func (app *application) listSnipsHandler(w http.ResponseWriter, r *http.Request)
 	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
+
 	}
 
 	snips, metadata, err := app.models.Snips.GetAll(input.Title, input.Tags, input.Filters)

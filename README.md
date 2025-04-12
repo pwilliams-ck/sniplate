@@ -1,10 +1,10 @@
 # sniplate
 
-`sniplate` is a boilerplate for building secure, scalable, HTTP services with
-Go. This _template_ uses text snippets (_snips_) as the initial API model to get
-started, hence the name _sniplate_. There will also be a user model, you can
-de-couple these and build out micro services as well, but I feel this is a good
-starting point as a monolith.
+`sniplate` is for building secure, scalable, HTTP services with Go. This
+_template_ uses text snippets (_snips_) as the initial API model to get started,
+hence the name _sniplate_. There will also be a user model, you can de-couple
+these and build out micro services as well, but I feel this is a good starting
+point as a modular monolith.
 
 The initial project set up has been completed, and includes the following
 features so far.
@@ -15,6 +15,7 @@ features so far.
 - Centralized error handling
 - Middleware
 - Security enhancements
+- Docker infrastructure
 
 ## Routes
 
@@ -37,19 +38,14 @@ Pull repository with Git.
 git pull https://github.com/pwilliams-ck/sniplate
 ```
 
-Or use Go `get`.
-
-```bash
-go get https://github.com/pwilliams-ck/sniplate
-```
-
 ## Build and Run Project
 
 ### Docker and Make
 
-You can use `make start` and `make stop` to build and run the docker
-environment, the migrating part is a work in progress. You can check out the
-`infra/` folder for more info.
+You can use `make` to build and run the docker environment, the migrating part
+is a work in progress. You should be able to run `make migrate` to migrate up,
+stick with the CLI for migrating down. You can check out the `infra/` folder for
+more info.
 
 ### App and DB as Services
 
@@ -59,7 +55,7 @@ run with a single command. Further down there is a
 database setup is a work in progress, and will use Make as well.
 
 ```bash
-go run ./cmd/api
+go run ./cmd/api -env=local-build
 ```
 
 You should now be able to run `curl` commands against `localhost:4200`.
@@ -98,11 +94,10 @@ cd ..
 go run ./cmd/api -tls=true
 ```
 
-### Build for Remote Server
+If you are using a reverse proxy like _nginx_ or _HAProxy_ then this will
+encrypt the traffic. between the proxy and the Sniplate app.
 
-Remote server testing is completed via the following workflow. This builds the
-app for Linux from your local machine, then transfers the executable to the
-server.
+### Build Binary
 
 First, make code changes.
 
@@ -112,16 +107,6 @@ building.
 ```bash
 GOOS=linux GOARCH=amd64 go build -o ./test-api ./cmd/api
 ```
-
-Then run the following to _ssh file transfer_ to move the binary over. Change
-the **executable**, **URL**, and **user** to fit your needs.
-
-```bash
-scp test-api pwilliams@svc-hub-dev.cloudkey.io:/home/pwilliams/
-```
-
-Then `ssh` into the server and run `./api-test`, add `-help` flag for more info.
-You might need to make it executable with `chmod +x api-test`.
 
 ## Conclusion
 

@@ -15,14 +15,14 @@ up_build: build_sniplate
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
 	 DSN=$${DSN:-${DEFAULT_DSN}} \
-	 docker-compose down
+	 docker compose down
 	@echo "Building (when required) and starting docker images..."
 	@PORT=$${PORT:-${DEFAULT_PORT}} \
 	 ENV=$${ENV:-${DEFAULT_ENV}} \
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
 	 DSN=$${DSN:-${DEFAULT_DSN}} \
-	 docker-compose up --build -d sniplate postgres
+	 docker compose up --build -d sniplate postgres
 	@echo "Docker images built and started!"
 
 ## stop: Stop docker-compose.
@@ -33,7 +33,7 @@ down:
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
 	 DSN=$${DSN:-${DEFAULT_DSN}} \
-	 docker-compose down
+	 docker compose down
 	@echo "Done!"
 
 ## migrate_up: Runs database migrations.
@@ -44,7 +44,7 @@ migrate_up:
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
 	 DSN=$${DSN:-${DEFAULT_DSN}} \
-	 docker-compose up -d migrate
+	 docker compose up -d migrate
 	@echo "Database migrations completed!"
 
 ## migrate_up: Runs database migrations.
@@ -55,7 +55,7 @@ migrate_stop:
 	 TLS=$${TLS:-${DEFAULT_TLS}} \
 	 LOG=$${LOG:-${DEFAULT_LOG}} \
 	 DSN=$${DSN:-${DEFAULT_DSN}} \
-	 docker-compose down migrate
+	 docker compose down migrate
 	@echo "Database migrations completed!"
 
 ## build_sniplate: Builds the sniplate binary as a linux executable.

@@ -195,7 +195,7 @@ func (m SnipModel) Update(snip *Snip) error {
 	// Declare the SQL query for updating the record and returning the new version
 	// number.
 	query := `
-        UPDATE snips 
+        UPDATE snips
         SET title = $1, content = $2, tags = $3, version = version + 1
         WHERE id = $4 AND version = $5
         RETURNING version`

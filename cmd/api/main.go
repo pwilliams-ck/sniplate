@@ -18,7 +18,7 @@ import (
 	"github.com/pwilliams-ck/sniplate/internal/data"
 )
 
-const version = "0.1.8"
+const version = "0.1.9"
 
 type config struct {
 	port   int

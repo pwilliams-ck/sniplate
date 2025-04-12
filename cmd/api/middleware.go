@@ -3,7 +3,22 @@ package main
 import (
 	"fmt"
 	"net/http"
+
+	"golang.org/x/time/rate"
 )
+
+// Below is an example of how these middleware functions works.
+// func (app *application) exampleMiddleware(next http.Handler) http.Handler {
+//
+//     // Any code here will run only once, when we wrap something with the middleware.
+//
+//     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//
+//         // Any code here will run for every request that the middleware handles.
+//
+//         next.ServeHTTP(w, r)
+//     })
+// }
 
 // Sets headers for incoming requests, we can set these as environment variables for the server
 // config if needed.
@@ -59,12 +74,32 @@ func (app *application) gracefulRecovery(next http.Handler) http.Handler {
 			// panicking goroutine. Executing a call to recover inside a deferred
 			// function (but not any function called by it) stops the panicking sequence
 			// by restoring normal execution and retrieves the error value passed to the
-			// call of panic.o panic().
+			// call of panic().
 			if err := recover(); err != nil {
 				w.Header().Set("Connection", "close")
 				app.serverErrorResponse(w, r, fmt.Errorf("%s", err))
 			}
 		}()
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// rateLimit limits the number of requests a client is allowed to make during a specific set of time.
+func (app *application) rateLimit(next http.Handler) http.Handler {
+	// Init a new rate limiter which allows an average of 2 requests per second, with a max of 4
+	// requests in a single burst.
+	limiter := rate.NewLimiter(2, 4)
+
+	// The function we are returning is a closure, which 'closes over' the limiter variable.
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Call limiter.Allow() to see if the request is permitted, and if it's not,
+		// then we call the rateLimitExceededResponse() helper to return a 429 Too Many
+		// Requests response (we will create this helper in a minute).
+		if !limiter.Allow() {
+			app.rateLimitExceededResponse(w, r)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})
