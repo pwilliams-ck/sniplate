@@ -1,6 +1,7 @@
 # Binaries
 bin/
 sniplateApp
+*sniplate*
 
 # Log file
 sniplate.log

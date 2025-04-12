@@ -111,7 +111,3 @@ GOOS=linux GOARCH=amd64 go build -o ./test-api ./cmd/api
 ## Conclusion
 
 This is a work in progress and will be updated regularly.
-
-## Repo Stats
-
-![Alt](https://repobeats.axiom.co/api/embed/dc98269af7e484f0897e78fc1adca4f09a810859.svg "Repobeats analytics image")
