@@ -110,4 +110,4 @@ GOOS=linux GOARCH=amd64 go build -o ./test-api ./cmd/api
 
 ## Conclusion
 
-This is a work in progress and will be updated regularly.
+This is a work in progress and will be updated when I have free time.
