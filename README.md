@@ -51,8 +51,8 @@ more info.
 
 `cd` into the project root directory and execute the following to compile and
 run with a single command. Further down there is a
-[Build for Remote Server](#build-for-remote-server) section as well. The
-database setup is a work in progress, and will use Make as well.
+[Build for Remote Server](#build-binary) section as well. The database setup is
+a work in progress, and will use Make as well.
 
 ```bash
 go run ./cmd/api -env=local-build
